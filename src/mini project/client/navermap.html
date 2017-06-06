@@ -1,0 +1,326 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>간단한 지도 표시하기</title>
+
+    <!--
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.1/themes/base/jquery-ui.css" />
+    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
+    -->
+    <!--자동완성추가-->
+
+    <script src="//code.jquery.com/jquery.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/latest/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/jquery.autocomplete.css" />
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/latest/css/bootstrap.min.css">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+
+    <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?clientId=Vqke1aAbesyM3VondrvO&submodules=geocoder"></script>
+    <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?clientId=Vqke1aAbesyM3VondrvO&submodules=drawing"></script>
+    <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?clientId=Vqke1aAbesyM3VondrvO&submodules=visualization"></script>
+    <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?clientId=Vqke1aAbesyM3VondrvO&callback=iniMap"></script>
+
+
+    <style type="text/css">
+        #map {
+        }
+
+        #data tr {
+            border-top: solid 1px #a0c0d7;
+        }
+
+        #data td {
+            padding-bottom: 0px;
+            padding-top: 0px;
+        }
+
+        #btnDetail {
+            -moz-box-shadow: inset 0px 1px 0px 0px #fff6af;
+            -webkit-box-shadow: inset 0px 1px 0px 0px #fff6af;
+            box-shadow: inset 0px 1px 0px 0px #fff6af;
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0.05, #ffec64), color-stop(1, #ffab23));
+            background: -moz-linear-gradient(top, #ffec64 5%, #ffab23 100%);
+            background: -webkit-linear-gradient(top, #ffec64 5%, #ffab23 100%);
+            background: -o-linear-gradient(top, #ffec64 5%, #ffab23 100%);
+            background: -ms-linear-gradient(top, #ffec64 5%, #ffab23 100%);
+            background: linear-gradient(to bottom, #ffec64 5%, #ffab23 100%);
+            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffec64', endColorstr='#ffab23',GradientType=0);
+            background-color: #ffec64;
+            -moz-border-radius: 6px;
+            -webkit-border-radius: 6px;
+            border-radius: 6px;
+            border: 1px solid #ffaa22;
+            display: inline-block;
+            cursor: pointer;
+            color: #333333;
+            font-family: Trebuchet MS;
+            font-size: 15px;
+            font-weight: bold;
+            padding: 6px 10px;
+            text-decoration: none;
+            text-shadow: 0px 1px 0px #ffee66;
+        }
+
+            #btnDetail :hover {
+                background: -webkit-gradient(linear, left top, left bottom, color-stop(0.05, #ffab23), color-stop(1, #ffec64));
+                background: -moz-linear-gradient(top, #ffab23 5%, #ffec64 100%);
+                background: -webkit-linear-gradient(top, #ffab23 5%, #ffec64 100%);
+                background: -o-linear-gradient(top, #ffab23 5%, #ffec64 100%);
+                background: -ms-linear-gradient(top, #ffab23 5%, #ffec64 100%);
+                background: linear-gradient(to bottom, #ffab23 5%, #ffec64 100%);
+                filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffab23', endColorstr='#ffec64',GradientType=0);
+                background-color: #ffab23;
+            }
+
+            #btnDetail:active {
+                position: relative;
+                top: 1px;
+            }
+
+        body {
+            padding: 0px;
+            margin: 0px;
+        }
+
+        .head {
+            background-color: #F1C40F;
+            text-align: center;
+            height: 40px;
+            color: black;
+            padding: 0px;
+            margin: 0px;
+        }
+
+        p {
+            padding: 0px;
+            margin: 0px;
+            font-size: 20px;
+            line-height: 40px;
+        }
+        .search {
+            text-align: center;
+            margin: 10px 0px;
+            background-color: black;
+            height: 40px;
+            padding: 0;
+            margin: 0;
+        }
+
+            .search .submit {
+                width: 82px;
+                color: black;
+                padding: 0px 20px;
+                background: #707070;
+            }
+
+        .te {
+            background-color: #5D5D5D;
+            border: 1px solid yellow;
+            height: 20px;
+            margin-top: 8px;
+            margin-left: 50px;
+        }
+
+        .search_text {
+            width: 200px;
+        }
+
+        .search .submit:hover {
+            color: #707070;
+            background-color: black;
+        }
+
+
+    </style>
+
+    <script type="text/javascript">
+        var parkingData;
+        var map;
+        $.get('http://172.20.10.2:3301/data').done(function (data) {
+            parkingData = data;
+            map = new naver.maps.Map("map");
+            //document.write(parkingData);
+
+
+            for (i = 0; i < 100; i++) {
+                var x, y;
+                //console.log(parkingData[i])
+                var temp_data = parkingData[i];
+                //원인? geocode가 ajax식으로 작동해서
+                naver.maps.Service.geocode({
+                    address: parkingData[i].addr
+                }, function (status, response) {
+                    if (status !== naver.maps.Service.Status.OK) {
+                        console.log("주소변환 에러")
+                        return;
+                    }
+                    var result = response.result // 검색 결과의 컨테이너
+                    items = result.items; // 검색 결과의 배열
+                    x = items[0].point.x;
+                    y = items[0].point.y;
+                    var marker = new naver.maps.Marker({
+                        position: new naver.maps.LatLng(y, x),
+                        map: map,
+                    })
+                    naver.maps.Event.addListener(marker, "click", function (e) {
+
+                        if (infowindow.getMap()) {
+                            infowindow.close();
+                        } else {
+                            infowindow.open(map, marker);
+                        }
+                    });
+                    // 마크 클릭시 인포윈도우 오픈
+
+                    for (var i = 0; i < parkingData.length; i++) {
+                        if (result.userquery == parkingData[i].addr) {
+                            info = parkingData[i];
+
+                        }
+                    }
+
+
+                    var contentString = $([
+
+                        '<div id= "fContainer">',
+                        '<form>',
+                        '<table id=data >',
+                        '<tr><td>주차장 코드 : ' + info.parking_code + '</td></tr>',
+                        '<tr><td>주차장 : ' + info.parking_name + '</td></tr>',
+                        '<tr><td>주차장 번호 : ' + info.tel + '</td></tr>',
+                        '<tr><td>수용량 : ' + info.capacity + '</td></tr>',
+                        '<tr><td>현재 주차 : ' + info.cur_parking + '</td></tr>',
+                        '<tr><td>마감 시간 : ' + info.end_time + '</td></tr>',
+                        '<tr><td>요금 : ' + info.rates + '</td></tr>',
+                        '<tr><td>시간당 요금 : ' + info.rates_time + '</td></tr>',
+                        '<tr><td>추가 요금 : ' + info.add_rate + '</td></tr>',
+                        '<tr><td>추가 요금 시간 : ' + info.add_rate_time + '</td></tr>',
+                        '<tr><td>하루 최대 요금 : ' + info.day_maximum + '</td></tr>',
+                        '</table>',
+                        '<input type="button" id="btnDetail" value="더보기" style="float:right"; onclick="fn_detailView('+info.parking_code+')" >',
+                        '</form>',
+                        '</div>'
+
+                    ].join(''));
+
+                    var infowindow = new naver.maps.InfoWindow({
+                       content: contentString[0],
+
+                        maxWidth: 150,
+                        backgroundColor: "#eee",
+                        // borderColor: "#2db400",
+                        borderColor: "#a0c0d7",
+                        borderWidth: 5,
+                        disableAnchor: false,
+                        anchorSize: new naver.maps.Size(20, 24),
+                        //anchorSkew: true,
+                        //anchorColor: "#a0c0d7",
+                        anchorColor: "#eee",
+
+                        pixelOffset: new naver.maps.Point(20, -20)
+
+
+                    });
+                    searchparking();
+                });
+            }
+        })
+
+        .fail(function () {
+            alert('연결이 비정상입니다')
+        })
+        function fn_detailView(parkingcode) {
+          location.href = "detailDataPage.html?"+ parkingcode;
+        }
+    $(document).ready(function () {
+
+        function searchAddressToCoordinate(address) {
+            naver.maps.Service.geocode({
+                address: address
+            }, function (status, response) {
+                if (status === naver.maps.Service.Status.ERROR) {
+                    return alert('Something Wrong!');
+                }
+
+                var item = response.result.items[0],
+                    addrType = item.isRoadAddress ? '[도로명 주소]' : '[지번 주소]',
+                    point = new naver.maps.LatLng(item.point.x, item.point.y);
+
+                alert(point);
+                map.setCenter(Point);
+            });
+        }
+
+
+
+        $("#submit").click( function (e) {
+            var keyword = $("#searchbox").val();
+
+
+            var parkName = keyword.split(" : ")[0];
+            var parkAddr = keyword.split(" : ")[1];
+
+
+            searchAddressToCoordinate(parkAddr);
+
+
+            e.preventDefault();
+          //  map.setCenter(Point);
+        });
+
+
+    }
+    )
+</script>
+
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/jquery.bgiframe.min.js"></script>
+<script type="text/javascript" src="js/jquery.ajaxQueue.js"></script>
+<script type="text/javascript" src="js/jquery.autocomplete.js"></script>
+
+<script>
+function searchparking(){
+    var availableTags = ['asd','qwe','zxc'];
+    var temp_data=[];
+    var jsonData = parkingData;
+
+    if (jsonData != null) {
+        for (n = 0; n < 100; n++) {
+            temp_data[n] = jsonData[n].parking_name + " : " + jsonData[n].addr;
+        }
+        $("#searchbox").autocomplete(temp_data, {
+            matchContains: true,
+            selectFirst: false
+        });
+
+    }
+}
+
+
+</script>
+</head>
+<body>
+
+    <div class="head">
+        <p>주차할래
+        </p>
+    </div>
+    <div class="search">
+        <form name="form1" method="post" action="result.php">
+            <input class="te" type="text" id="searchbox" name="searchbox" >
+            <input value="검색" type="button" id="submit" class="submit">
+        </form>
+</div>
+    <div id="map" style="width:100%;height:600px;"></div>
+
+
+
+</body>
+</html>
